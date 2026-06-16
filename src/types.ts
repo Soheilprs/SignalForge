@@ -117,8 +117,8 @@ export interface BacktestResult {
   winRate: number;
   numberOfTrades: number;
   averageTradeReturn: number;
-  bestToken: TokenSymbol;
-  worstToken: TokenSymbol;
+  bestToken: TokenSymbol | "N/A";
+  worstToken: TokenSymbol | "N/A";
   riskAdjustedScore: number;
   cashModeDays: number;
   equityCurve: EquityPoint[];

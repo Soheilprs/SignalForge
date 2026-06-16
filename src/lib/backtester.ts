@@ -31,11 +31,33 @@ function parsePercent(value: string): number {
   return Number.parseFloat(value.replace("%", "")) / 100;
 }
 
+export function createEmptyBacktestResult(initialCapital = 10000): BacktestResult {
+  return {
+    initialCapital,
+    endingCapital: initialCapital,
+    finalEquity: initialCapital,
+    totalReturn: 0,
+    maxDrawdown: 0,
+    winRate: 0,
+    numberOfTrades: 0,
+    averageTradeReturn: 0,
+    bestToken: "N/A",
+    worstToken: "N/A",
+    riskAdjustedScore: 0,
+    cashModeDays: 0,
+    equityCurve: [{ day: 0, label: "D0", value: initialCapital }]
+  };
+}
+
 export function runBacktest(
   strategy: StrategySpec,
   scoredTokens: ScoredToken[],
   riskConfig: RiskConfig
 ): BacktestResult {
+  if (scoredTokens.length === 0) {
+    return createEmptyBacktestResult(strategy.backtestConfig.initialCapital);
+  }
+
   const selected = scoredTokens.filter((token) => strategy.universe.includes(token.symbol));
   const tradable = selected.length > 0 ? selected : scoredTokens.slice(0, 1);
   const startingCapital = strategy.backtestConfig.initialCapital;

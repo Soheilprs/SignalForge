@@ -7,6 +7,7 @@ import { RiskProfile, TokenSymbol } from "../types";
 interface StrategyBuilderProps {
   selectedTokens: TokenSymbol[];
   riskProfile: RiskProfile;
+  dataModeLabel: string;
   onTokenToggle: (token: TokenSymbol) => void;
   onRiskProfileChange: (riskProfile: RiskProfile) => void;
   onGenerate: () => void;
@@ -15,6 +16,7 @@ interface StrategyBuilderProps {
 export function StrategyBuilder({
   selectedTokens,
   riskProfile,
+  dataModeLabel,
   onTokenToggle,
   onRiskProfileChange,
   onGenerate
@@ -27,6 +29,9 @@ export function StrategyBuilder({
           <p className="mt-1 text-sm text-slate-400">
             Choose the BNB Chain market universe and risk profile for the backtestable strategy spec.
           </p>
+          <div className="mt-3 inline-flex rounded-full border border-forge-line bg-white/5 px-3 py-1 text-xs font-semibold text-forge-gold">
+            {dataModeLabel}
+          </div>
         </div>
         <button
           type="button"
