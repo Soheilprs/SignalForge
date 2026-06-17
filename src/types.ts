@@ -2,6 +2,8 @@ export type TokenSymbol = "BNB" | "CAKE" | "TWT" | "XVS" | "ALPACA" | "BAKE" | "
 
 export type RiskProfile = "Conservative" | "Balanced" | "Aggressive";
 
+export type DataMode = "mock" | "live-cmc";
+
 export type VolatilityFilter = "strict" | "medium" | "loose";
 
 export type VolumeTrend = "Rising" | "Stable" | "Falling";

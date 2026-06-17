@@ -1,9 +1,12 @@
-import { MarketData, TokenSymbol } from "../../types";
+import { DataMode, MarketData, TokenSymbol } from "../../types";
 
 export interface MarketDataProvider {
-  id: "mock" | "cmc";
+  id: DataMode;
   label: string;
   getMarketData: (selectedSymbols: TokenSymbol[]) => Promise<MarketData[]>;
 }
 
-export const DEFAULT_DATA_MODE_LABEL = "Data mode: Deterministic CMC-compatible demo data";
+export const DATA_MODE_LABELS: Record<DataMode, string> = {
+  mock: "Data mode: Deterministic CMC-compatible demo data",
+  "live-cmc": "Data mode: Live CMC latest quotes"
+};

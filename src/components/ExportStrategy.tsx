@@ -1,19 +1,26 @@
 import { Check, Copy, Download } from "lucide-react";
 import { useMemo, useState } from "react";
-import { BacktestResult, ScoredToken, StrategySpec } from "../types";
+import { BacktestResult, DataMode, ScoredToken, StrategySpec } from "../types";
 
 interface ExportStrategyProps {
   strategy: StrategySpec;
   backtest: BacktestResult;
   scoredTokens: ScoredToken[];
+  marketDataMode: DataMode;
 }
 
-export function ExportStrategy({ strategy, backtest, scoredTokens }: ExportStrategyProps) {
+export function ExportStrategy({ strategy, backtest, scoredTokens, marketDataMode }: ExportStrategyProps) {
   const [copied, setCopied] = useState(false);
   const exportPayload = useMemo(
     () => ({
       ...strategy,
-      generatedAt: "demo-deterministic",
+      generatedAt: marketDataMode === "live-cmc" ? "live-cmc-latest-quotes" : "demo-deterministic",
+      dataProvenance: {
+        marketDataMode,
+        latestQuotes: marketDataMode === "live-cmc" ? "CoinMarketCap latest quotes" : "deterministic CMC-compatible mock latest quotes",
+        historicalSeries: "deterministic generated history",
+        backtestData: "deterministic MVP simulation"
+      },
       signalRanking: scoredTokens.map((token) => ({
         symbol: token.symbol,
         score: token.score,
@@ -26,7 +33,7 @@ export function ExportStrategy({ strategy, backtest, scoredTokens }: ExportStrat
       })),
       backtest
     }),
-    [strategy, backtest, scoredTokens]
+    [strategy, backtest, scoredTokens, marketDataMode]
   );
   const json = JSON.stringify(exportPayload, null, 2);
 

@@ -24,7 +24,7 @@ For hackathon judges, the app makes the Track 2 output visible: a generated Stra
 ## What It Does
 
 - Selects a BNB Chain ecosystem token universe
-- Uses deterministic CMC-compatible demo market data
+- Uses deterministic CMC-compatible demo market data or live CoinMarketCap latest quotes
 - Generates seeded mock historical prices for indicator calculation
 - Calculates RSI, MACD, moving averages, volatility, momentum, and volume trend
 - Detects market regime: Bullish, Neutral, Bearish, or High Volatility Risk-Off
@@ -36,7 +36,7 @@ For hackathon judges, the app makes the Track 2 output visible: a generated Stra
 ## How It Works
 
 1. The user selects tokens and a risk profile.
-2. The market data provider returns CMC-compatible market fields.
+2. The market data provider returns CMC-compatible market fields from demo data or `/api/cmc/quotes`.
 3. The indicator engine derives technical indicators from deterministic mock history.
 4. The regime detector classifies the selected market universe.
 5. The scoring engine ranks tokens using RSI, MACD, momentum, volume trend, volatility, liquidity, and regime adjustment.
@@ -66,7 +66,60 @@ The exported JSON includes:
 - `executionMode`
 - `disclaimer`
 - `signalRanking`
+- `dataProvenance`
 - `backtest`
+
+Shortened example:
+
+```json
+{
+  "skillName": "SignalForge BNB Regime-Aware Momentum Skill",
+  "strategyType": "Momentum + Regime Detection",
+  "dataProvenance": {
+    "marketDataMode": "live-cmc",
+    "latestQuotes": "CoinMarketCap latest quotes",
+    "historicalSeries": "deterministic generated history",
+    "backtestData": "deterministic MVP simulation"
+  },
+  "marketRegime": {
+    "regime": "Bullish",
+    "confidence": 0.78
+  },
+  "entryRules": [
+    {
+      "id": "ENTRY_001",
+      "rule": "Enter the highest-ranked token when SignalForge score is above threshold.",
+      "rationale": "Strong momentum with technical confirmation."
+    }
+  ],
+  "riskControls": {
+    "riskProfile": "Balanced",
+    "maxAllocationPerToken": "30%",
+    "stopLoss": "6%",
+    "takeProfit": "12%",
+    "cashAsset": "USDT"
+  },
+  "executionMode": "Backtest-only / no live execution"
+}
+```
+
+## Data Sources
+
+SignalForge BNB has two frontend data modes:
+
+- **Demo Data:** deterministic CMC-compatible mock latest quote data. This is the default and works without API keys.
+- **Live CMC Quotes:** the frontend calls the app's own `/api/cmc/quotes` endpoint. The backend then calls CoinMarketCap latest quotes with the server-side `CMC_API_KEY`.
+
+Live CMC mode updates current market fields:
+
+- price
+- market cap
+- 24h volume
+- 1h percent change
+- 24h percent change
+- 7d percent change
+
+The MVP still uses deterministic generated history for RSI, MACD, moving averages, synthetic historical series, and backtesting. This keeps the demo stable while allowing latest quote data to be live.
 
 ## Sponsor Alignment
 
@@ -92,6 +145,7 @@ Backtest-only / no live execution
 - Tailwind CSS
 - Recharts
 - Lucide React
+- Express
 - Vitest
 
 ## Local Setup
@@ -118,13 +172,78 @@ npm run test
 
 The current MVP uses deterministic CMC-compatible mock data by default.
 
-Optional future CMC integration:
+Live CMC latest quotes use a server-side environment variable:
 
 ```bash
-VITE_CMC_API_KEY=your_coinmarketcap_api_key
+CMC_API_KEY=your_coinmarketcap_api_key
 ```
 
-The integration-ready provider lives in `src/data/providers/cmcProvider.ts`. It maps CoinMarketCap quote fields into the app's `MarketData` type and explains where volatility and liquidity normalization should be added for production use.
+## Running With Live CMC Quotes
+
+Demo mode only:
+
+```bash
+npm run dev
+```
+
+Live CMC quote mode:
+
+```bash
+CMC_API_KEY=your_coinmarketcap_api_key npm run server
+npm run dev
+```
+
+Or run both in one terminal:
+
+```bash
+CMC_API_KEY=your_coinmarketcap_api_key npm run dev:full
+```
+
+Then open the app and choose **Live CMC Quotes** in the Data Source control.
+
+Without `CMC_API_KEY`, the server returns a clean error and the frontend falls back to deterministic demo data.
+
+## Demo Flow
+
+1. Open the app and show Track 2 / CMC-compatible / backtest-only badges.
+2. Select Demo Data or Live CMC Quotes.
+3. Choose BNB ecosystem tokens and a risk profile.
+4. Show Skill Output Summary as the main Track 2 deliverable.
+5. Show Market Regime and Fear & Greed-style score.
+6. Show indicator-aware token ranking with RSI, MACD, volume trend, score, and reasons.
+7. Show generated strategy thesis, entry rules, exit rules, invalidation rules, and risk controls.
+8. Show deterministic MVP backtest results and equity curve.
+9. Copy or download the exported JSON strategy spec.
+
+## Screenshots
+
+Add screenshots to the `assets/` folder before final submission:
+
+- Hero and Strategy Builder: `assets/hero-builder.png`
+- Skill Output Summary: `assets/skill-output-summary.png`
+- Market Regime and Signal Table: `assets/regime-signal-table.png`
+- Backtest Results: `assets/backtest-results.png`
+- Exported JSON Strategy Spec: `assets/exported-json.png`
+
+## DoraHacks Submission Summary
+
+SignalForge BNB is a CMC-compatible Strategy Skill for BNB Chain markets. It transforms live or deterministic CMC-style market data into a structured, risk-aware, backtestable trading strategy spec.
+
+The app analyzes BNB ecosystem tokens using latest quote fields, RSI, MACD, moving averages, momentum, volatility, liquidity, volume trends, and market regime detection. It then generates an LLM-style Strategy Skill output with a thesis, assumptions, entry rules, exit rules, invalidation rules, risk controls, and backtest configuration.
+
+SignalForge BNB does not execute trades, connect wallets, or route orders. It is designed for Track 2: Strategy Skills, where the deliverable is an exportable strategy spec rather than a live trading agent.
+
+The MVP supports live CoinMarketCap latest quotes through a server-side proxy while keeping deterministic generated history for repeatable indicator and backtest demos. The exported JSON includes data provenance so users can see exactly what is live and what is simulated.
+
+## Deployment Notes
+
+- Mock/demo mode can run as frontend-only.
+- Live CMC mode needs the Express API server deployed with `CMC_API_KEY`.
+- The CMC key must stay server-side and should never be exposed as a Vite frontend environment variable.
+- Production must route `/api/cmc/quotes` to the backend.
+- Recommended simple deployment:
+  - Frontend: Vercel or Netlify
+  - Backend: Railway, Render, or a single full-stack Render/Railway deployment
 
 ## Project Structure
 
@@ -159,20 +278,23 @@ src/
   index.css
   main.tsx
   types.ts
+server/
+  index.js
+assets/
+  .gitkeep
 ```
 
 ## Current Limitations
 
 - Market data is deterministic mock data by default.
 - Historical prices are seeded mock series, not real OHLCV candles.
-- CoinMarketCap API mode is integration-ready but not wired into a visible UI switch.
+- Live CMC mode uses latest quotes only; historical indicators and backtest data remain deterministic in the MVP.
 - Backtesting is simplified and intended for demo stability, not financial accuracy.
 - This is not financial advice.
 
 ## Future Improvements
 
-- Add a visible data-mode switch for mock vs. CMC API data.
-- Add real CMC quote and historical OHLCV ingestion.
+- Add real CMC historical OHLCV ingestion.
 - Improve volatility and liquidity scoring from real market depth and historical data.
 - Add saved strategy comparison.
 - Add more backtest diagnostics such as exposure, turnover, and regime attribution.

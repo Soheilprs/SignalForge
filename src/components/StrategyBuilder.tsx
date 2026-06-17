@@ -2,14 +2,16 @@ import { RefreshCw } from "lucide-react";
 import { DEFAULT_TOKEN_UNIVERSE } from "../data/mockMarketData";
 import { RISK_CONFIGS } from "../lib/scoring";
 import { cn } from "../lib/utils";
-import { RiskProfile, TokenSymbol } from "../types";
+import { DataMode, RiskProfile, TokenSymbol } from "../types";
 
 interface StrategyBuilderProps {
   selectedTokens: TokenSymbol[];
   riskProfile: RiskProfile;
   dataModeLabel: string;
+  dataMode: DataMode;
   onTokenToggle: (token: TokenSymbol) => void;
   onRiskProfileChange: (riskProfile: RiskProfile) => void;
+  onDataModeChange: (dataMode: DataMode) => void;
   onGenerate: () => void;
 }
 
@@ -17,8 +19,10 @@ export function StrategyBuilder({
   selectedTokens,
   riskProfile,
   dataModeLabel,
+  dataMode,
   onTokenToggle,
   onRiskProfileChange,
+  onDataModeChange,
   onGenerate
 }: StrategyBuilderProps) {
   return (
@@ -44,6 +48,35 @@ export function StrategyBuilder({
       </div>
 
       <div className="mt-6 grid min-w-0 gap-6">
+        <div className="min-w-0">
+          <div className="mb-3 text-sm font-medium text-slate-200">Data Source</div>
+          <div className="grid min-w-0 gap-2 md:grid-cols-2">
+            {[
+              { mode: "mock" as const, label: "Demo Data", description: "Deterministic CMC-compatible demo data" },
+              { mode: "live-cmc" as const, label: "Live CMC Quotes", description: "Server-side CoinMarketCap latest quotes" }
+            ].map((option) => {
+              const active = option.mode === dataMode;
+              return (
+                <button
+                  key={option.mode}
+                  type="button"
+                  onClick={() => onDataModeChange(option.mode)}
+                  className={cn(
+                    "rounded-md border p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-forge-gold",
+                    active ? "border-forge-gold bg-forge-gold/12" : "border-forge-line bg-white/5 hover:border-slate-500"
+                  )}
+                >
+                  <div className="text-sm font-semibold text-white">{option.label}</div>
+                  <div className="mt-1 text-xs leading-5 text-slate-400">{option.description}</div>
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-3 text-xs leading-5 text-slate-500">
+            Latest market fields can be live from CMC. Historical indicators and the MVP backtest use deterministic generated history.
+          </p>
+        </div>
+
         <div className="min-w-0">
           <div className="mb-3 text-sm font-medium text-slate-200">Token universe</div>
           <div className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">

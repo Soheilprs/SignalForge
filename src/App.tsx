@@ -9,24 +9,27 @@ import { SignalTable } from "./components/SignalTable";
 import { SkillOutputSummary } from "./components/SkillOutputSummary";
 import { StrategyBuilder } from "./components/StrategyBuilder";
 import { StrategyOutput } from "./components/StrategyOutput";
-import { DEFAULT_DATA_MODE_LABEL, marketDataProviders } from "./data/providers";
+import { DATA_MODE_LABELS, marketDataProviders } from "./data/providers";
 import { runBacktest } from "./lib/backtester";
 import { attachIndicators } from "./lib/indicators";
 import { detectMarketRegime } from "./lib/regimeDetector";
 import { RISK_CONFIGS, scoreTokens } from "./lib/scoring";
 import { generateStrategy } from "./lib/strategyGenerator";
-import { MarketData, RiskProfile, TokenSymbol } from "./types";
+import { DataMode, MarketData, RiskProfile, TokenSymbol } from "./types";
 
 function App() {
   const [selectedTokens, setSelectedTokens] = useState<TokenSymbol[]>(["BNB", "CAKE", "TWT", "XVS"]);
   const [riskProfile, setRiskProfile] = useState<RiskProfile>("Balanced");
   const [generationKey, setGenerationKey] = useState(0);
+  const [dataMode, setDataMode] = useState<DataMode>("mock");
+  const [activeMarketDataMode, setActiveMarketDataMode] = useState<DataMode>("mock");
   const [marketData, setMarketData] = useState<MarketData[]>([]);
   const [dataError, setDataError] = useState<string | null>(null);
   const [isLoadingMarketData, setIsLoadingMarketData] = useState(false);
 
   const riskConfig = RISK_CONFIGS[riskProfile];
-  const dataProvider = marketDataProviders.mock;
+  const dataProvider = marketDataProviders[activeMarketDataMode];
+  const requestedDataProvider = marketDataProviders[dataMode];
 
   useEffect(() => {
     let cancelled = false;
@@ -42,15 +45,24 @@ function App() {
       setIsLoadingMarketData(true);
 
       try {
-        const data = await dataProvider.getMarketData(selectedTokens);
+        const data = await requestedDataProvider.getMarketData(selectedTokens);
 
         if (!cancelled) {
           setMarketData(data);
+          setActiveMarketDataMode(dataMode);
         }
       } catch (error) {
         if (!cancelled) {
-          setMarketData([]);
-          setDataError(error instanceof Error ? error.message : "Market data provider failed.");
+          const fallbackData = await marketDataProviders.mock.getMarketData(selectedTokens);
+          const errorMessage = error instanceof Error ? error.message : "Market data provider failed.";
+          setMarketData(fallbackData);
+          setActiveMarketDataMode("mock");
+          setDataMode("mock");
+          setDataError(
+            dataMode === "live-cmc"
+              ? `Live CMC data unavailable. Using deterministic demo data. ${errorMessage}`
+              : errorMessage
+          );
         }
       } finally {
         if (!cancelled) {
@@ -64,7 +76,7 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [dataProvider, generationKey, selectedTokens]);
+  }, [dataMode, generationKey, requestedDataProvider, selectedTokens]);
 
   const indicatorData = useMemo(() => attachIndicators(marketData), [marketData]);
   const marketRegime = useMemo(() => detectMarketRegime(indicatorData), [indicatorData]);
@@ -96,15 +108,21 @@ function App() {
           <StrategyBuilder
             selectedTokens={selectedTokens}
             riskProfile={riskProfile}
-            dataModeLabel={DEFAULT_DATA_MODE_LABEL}
+            dataModeLabel={DATA_MODE_LABELS[activeMarketDataMode]}
+            dataMode={dataMode}
             onTokenToggle={toggleToken}
             onRiskProfileChange={setRiskProfile}
+            onDataModeChange={setDataMode}
             onGenerate={() => setGenerationKey((key) => key + 1)}
           />
 
           {dataError ? (
-            <EmptyState title="Market data unavailable" message={dataError} />
-          ) : selectedTokens.length === 0 ? (
+            <div className="rounded-lg border border-forge-gold/40 bg-forge-gold/10 px-4 py-3 text-sm leading-6 text-slate-200">
+              {dataError}
+            </div>
+          ) : null}
+
+          {selectedTokens.length === 0 ? (
             <EmptyState
               title="Select at least one token to generate a strategy skill."
               message="Choose one or more BNB Chain ecosystem tokens in the builder to create signals, a strategy spec, and a backtest."
@@ -123,7 +141,12 @@ function App() {
               <SignalTable tokens={scoredTokens} />
               <StrategyOutput strategy={strategy} />
               <BacktestResults result={backtest} />
-              <ExportStrategy strategy={strategy} backtest={backtest} scoredTokens={scoredTokens} />
+              <ExportStrategy
+                strategy={strategy}
+                backtest={backtest}
+                scoredTokens={scoredTokens}
+                marketDataMode={activeMarketDataMode}
+              />
             </>
           )}
         </ErrorBoundary>
