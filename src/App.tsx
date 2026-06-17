@@ -127,7 +127,7 @@ function App() {
               title="Select at least one token to generate a strategy skill."
               message="Choose one or more BNB Chain ecosystem tokens in the builder to create signals, a strategy spec, and a backtest."
             />
-          ) : isLoadingMarketData ? (
+          ) : isLoadingMarketData && marketData.length === 0 ? (
             <EmptyState title="Loading market data" message="Preparing deterministic CMC-compatible demo data." />
           ) : marketData.length === 0 ? (
             <EmptyState
@@ -136,6 +136,11 @@ function App() {
             />
           ) : (
             <>
+              {isLoadingMarketData ? (
+                <div className="rounded-lg border border-forge-line bg-white/5 px-4 py-3 text-sm leading-6 text-slate-300">
+                  Refreshing market data without changing the current strategy view.
+                </div>
+              ) : null}
               <SkillOutputSummary strategy={strategy} dataProvider={dataProvider} />
               <MarketRegimePanel marketRegime={marketRegime} />
               <SignalTable tokens={scoredTokens} />
