@@ -217,8 +217,6 @@ Without `CMC_API_KEY`, the server returns a clean error and the frontend falls b
 
 ## Screenshots
 
-Add screenshots to the `assets/` folder before final submission:
-
 - Hero and Strategy Builder: `assets/hero-builder.png`
 - Skill Output Summary: `assets/skill-output-summary.png`
 - Market Regime and Signal Table: `assets/regime-signal-table.png`
