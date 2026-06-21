@@ -282,13 +282,6 @@ assets/
   .gitkeep
 ```
 
-## Current Limitations
-
-- Market data is deterministic mock data by default.
-- Historical prices are seeded mock series, not real OHLCV candles.
-- Live CMC mode uses latest quotes only; historical indicators and backtest data remain deterministic in the MVP.
-- Backtesting is simplified and intended for demo stability, not financial accuracy.
-- This is not financial advice.
 
 ## Future Improvements
 
